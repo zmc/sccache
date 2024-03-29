@@ -729,15 +729,20 @@ where
             } else {
                 // `{:#}` prints the error and the causes in a single line.
                 let errmsg = format!("{:#}", e);
-                warn!(
-                    "[{}]: Could not perform distributed compile, falling back to local: {}",
-                    out_pretty2, errmsg
-                );
+                Err(anyhow!(
+                    "[{}]: Could not perform distributed compile!: {}",
+                    out_pretty2,
+                    errmsg
+                ))
+                // warn!(
+                //     "[{}]: Could not perform distributed compile, falling back to local: {}",
+                //     out_pretty2, errmsg
+                // );
 
-                compile_cmd
-                    .execute(&creator)
-                    .await
-                    .map(|o| (DistType::Error, o))
+                // compile_cmd
+                //     .execute(&creator)
+                //     .await
+                //     .map(|o| (DistType::Error, o))
             }
         })
         .map_ok(move |(dt, o)| (cacheable, dt, o))
