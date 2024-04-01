@@ -405,11 +405,13 @@ where
         args: args.iter().map(|a| a.as_ref().to_owned()).collect(),
         env_vars,
     });
-    trace!("request_compile: {:?}", req);
+    trace!("request_compile conn: {:?}", conn);
+    trace!("request_compile req: {:?}", req);
     //TODO: better error mapping?
     let response = conn
         .request(req)
         .context("Failed to send data to or receive data from server")?;
+    trace!("request_compile resp: {:?}", response);
     if let Response::Compile(response) = response {
         Ok(response)
     } else {

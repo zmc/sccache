@@ -21,6 +21,7 @@ use std::io::{self, BufReader, BufWriter, Read};
 use std::net::TcpStream;
 
 /// A connection to an sccache server.
+#[derive(Debug)]
 pub struct ServerConnection {
     /// A reader for the socket connected to the server.
     reader: BufReader<TcpStream>,
