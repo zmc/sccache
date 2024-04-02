@@ -182,6 +182,8 @@ fn get_clap_command() -> clap::Command {
 /// Parse the commandline args into a `Result<Command>` to execute.
 pub fn try_parse() -> Result<Command> {
     trace!("parse");
+    let args_: Vec<_> = env::args_os().collect();
+    trace!("args: {:?}", args_);
 
     let cwd =
         env::current_dir().context("sccache: Couldn't determine current working directory")?;
