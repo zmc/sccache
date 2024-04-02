@@ -20,7 +20,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use which::which_in;
 
-const ENV_VAR_INTERNAL_START_SERVER: &str = "SCCACHE_START_SERVER";
+pub const ENV_VAR_INTERNAL_START_SERVER: &str = "SCCACHE_START_SERVER";
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum StatsFormat {
@@ -236,6 +236,7 @@ pub fn try_parse() -> Result<Command> {
     // A command can either be from `ENV_VAR_INTERNAL_START_SERVER` being set or from command-line
     // args. Validate things so that error messages are nice and the returned opts are correct
     match (internal_start_server, matches_result) {
+        (true, Ok(_)) => Ok(Command::InternalStartServer),
         (true, Err(e)) => {
             // Need to make sure that the error from `clap` is due to a missing command and not
             // some other issue
@@ -246,11 +247,6 @@ pub fn try_parse() -> Result<Command> {
             }
         }
         (false, Err(e)) => Err(e.into()),
-        (true, Ok(_)) => {
-            // `ENV_VAR_INTERNAL_START_SERVER` and a match means that more than one command was
-            // provided
-            bail!("`{ENV_VAR_INTERNAL_START_SERVER}=1` can't be used with other commands");
-        }
         (false, Ok(matches)) => {
             if matches.get_flag("show-stats") {
                 let fmt = matches

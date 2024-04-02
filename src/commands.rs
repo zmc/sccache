@@ -14,7 +14,7 @@
 
 use crate::cache::storage_from_config;
 use crate::client::{connect_to_server, connect_with_retry, ServerConnection};
-use crate::cmdline::{Command, StatsFormat};
+use crate::cmdline::{Command, StatsFormat, ENV_VAR_INTERNAL_START_SERVER};
 use crate::compiler::ColorMode;
 use crate::config::{default_disk_cache_dir, Config};
 use crate::jobserver::Client;
@@ -100,7 +100,6 @@ fn run_server_process(startup_timeout: Option<Duration>) -> Result<ServerStartup
 
     let _child = process::Command::new(&exe_path)
         .current_dir(workdir)
-        .env("SCCACHE_START_SERVER", "1")
         .env("SCCACHE_STARTUP_NOTIFY", &socket_path)
         .env("RUST_BACKTRACE", "1")
         .spawn()?;
@@ -198,7 +197,6 @@ fn run_server_process(startup_timeout: Option<Duration>) -> Result<ServerStartup
     let mut envp = {
         let mut v = vec![];
         let extra_vars = vec![
-            (OsString::from("SCCACHE_START_SERVER"), OsString::from("1")),
             (
                 OsString::from("SCCACHE_STARTUP_NOTIFY"),
                 OsString::from(&pipe_name),
@@ -304,8 +302,9 @@ fn connect_or_start_server(
     match connect_to_server(port) {
         Ok(server) => Ok(server),
         Err(ref e)
-            if e.kind() == io::ErrorKind::ConnectionRefused
-                || e.kind() == io::ErrorKind::TimedOut =>
+            if (e.kind() == io::ErrorKind::ConnectionRefused
+                || e.kind() == io::ErrorKind::TimedOut)
+                && env::var(ENV_VAR_INTERNAL_START_SERVER).as_deref() == Ok("1") =>
         {
             // If the connection was refused we probably need to start
             // the server.
