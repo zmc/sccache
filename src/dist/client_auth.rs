@@ -5,6 +5,7 @@ use http::StatusCode;
 use http_body_util::Full;
 use hyper::Response;
 use serde::Serialize;
+use serde_json;
 use std::collections::HashMap;
 use std::error::Error as StdError;
 use std::io;
@@ -96,6 +97,7 @@ mod code_grant_pkce {
     use serde::{Deserialize, Serialize};
     use sha2::{Digest, Sha256};
     use std::collections::HashMap;
+    use std::io::Read;
     use std::sync::mpsc;
     use std::sync::Mutex;
     use std::time::{Duration, Instant};
@@ -256,8 +258,23 @@ mod code_grant_pkce {
             )
         }
 
+        // let mut buf: Vec<u8> = vec![];
+        // let res_copied = res.copy_to(&mut buf);
+        // let res_text = res.clone().text();
+        // let res_text = buf.as_slice();
+        let res_text = res.text().context("Failed to parse token response");
+        debug!("OAuth response: {:?}", res_text.unwrap().clone());
+        // match res_text {
+        //     Ok(value) => {
+        //         // let res_text = String::from(buf.as_slice());
+        //         // let res_text = buf.as_slice();
+        //         debug!("OAuth response: {}", value);
+        //     }
+        //     Err(_) => {}
+        // }
         let (token, expires_at) = handle_token_response(
-            res.json()
+            serde_json::from_str(&res_text.unwrap())
+                // res.json()
                 .context("Failed to parse token response as JSON")?,
         )?;
         if expires_at - Instant::now() < MIN_TOKEN_VALIDITY {
